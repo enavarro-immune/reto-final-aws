@@ -1,0 +1,3 @@
+# Este archivo contiene las dependencias del proyecto Flask Time App
+Flask==3.1.1
+pytz==2025.2
