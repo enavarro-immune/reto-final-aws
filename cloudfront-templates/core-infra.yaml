@@ -1,0 +1,179 @@
+# Este template maneja la infraestructura básica para la aplicación web, incluyendo SG, ALB, TG, LT y ASG.
+# Los recursos son creados en la VPC especificada y se configuran para manejar tráfico HTTP.
+# Incluye un Launch Template que ejecuta un script de bootstrap desde S3 para configurar la aplicación.
+# Los parámetros de VPC, subredes y AMI son definidos para permitir reutilización en diferentes entornos.
+# Definición de recursos
+# Los recursos incluyen un Security Group, un Application Load Balancer (ALB),
+# un Target Group (TG), un Launch Template (LT) y un Auto Scaling Group (ASG).  
+# El Security Group permite tráfico HTTP y HTTPS desde cualquier IP.
+# El ALB escucha en el puerto 80 y redirige el tráfico al Target Group
+# El Launch Template especifica la AMI, tipo de instancia, y un script de bootstrap que se ejecuta al iniciar la instancia.
+# El Auto Scaling Group se configura para manejar la escalabilidad de la aplicación.
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Core Web Infrastructure - SG, ALB, TG, LT, ASG
+
+Parameters:
+  VpcId:
+    Type: String
+    Description: VPC ID # tiene que ser un valor con la forma vpc-xxxxxxxxxxxxxxxxx
+
+  Subnet1:
+    Type: String
+    Description: Subnet ID in first availability zone (us-east-1a) 
+    # tiene que ser un valor con la forma subnet-xxxxxxxxxxxxxxxxx que 
+    # corresponda a una subred en la zona de disponibilidad adecuada
+
+  Subnet2:
+    Type: String
+    Description: Subnet ID in second availability zone (us-east-1b)
+    # tiene que ser un valor con la forma subnet-xxxxxxxxxxxxxxxxx que 
+    # corresponda a una subred en la zona de disponibilidad adecuada
+
+  AMIId:
+    Type: String
+    Description: Amazon Linux AMI ID
+    # tiene que ser un valor con la forma ami-xxxxxxxxxxxxxxxxx que
+    # corresponda a una AMI válida
+
+  BootstrapScriptBucket:
+    Type: String
+    Description: S3 Bucket name where the bootstrap script is stored
+    # tiene que ser un valor con el nombre del bucket S3 donde se encuentra el script de bootstrap
+
+# Los recursos se van a crear en orden de dependencia.
+
+Resources:
+  # Security Group
+  # Es muy importante que el SG permita el trafico a travez del puerto 80 ya que la aplicacion corre en ese puerto
+  # y el HTTP Listener escucha en ese puerto. Si se cambia el puerto, hay que actualizarlo en la app y en el HTTP Listener.
+  WebSecurityGroup: 
+    Properties:
+      GroupName: time-app-security-group
+      GroupDescription: SG for web servers
+      VpcId: !Ref VpcId
+      SecurityGroupIngress: 
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: udp
+          FromPort: 53
+          ToPort: 53
+          CidrIp: 0.0.0.0/0
+
+  # Target Group
+  # El Target Group es donde se registran las instancias EC2 que van a recibir el trafico del ALB
+  # Se configura para usar HTTP en el puerto 80 y tiene un chequeo de salud configurado
+  # para verificar que las instancias respondan correctamente.
+  WebTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: time-app-target-group
+      TargetType: instance
+      Protocol: HTTP
+      Port: 80
+      IpAddressType: ipv4
+      VpcId: !Ref VpcId
+      HealthCheckProtocol: HTTP
+      HealthCheckPath: /health # Ruta de chequeo de salud. Esta definida en la aplicación.
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 2
+      Matcher:
+        HttpCode: 200
+
+  # ALB
+  # El ALB escucha en el puerto 80 y redirige el trafico al Target Group
+  # El ALB se configura para ser accesible desde internet y se asocia con las
+  # subredes especificadas en los parámetros.
+  WebLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: time-app-load-balancer
+      Type: application
+      Scheme: internet-facing
+      IpAddressType: ipv4
+      Subnets:
+        - !Ref Subnet1
+        - !Ref Subnet2
+      SecurityGroups:
+        - !Ref WebSecurityGroup
+
+  # HTTP Listener
+  # El HTTP Listener escucha en el puerto 80 y redirige el trafico al Target Group
+  WebHTTPListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref WebLoadBalancer
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref WebTargetGroup
+
+  # Launch Template with S3 bootstrap script
+  # El Launch Template define la configuración de las instancias EC2 que se van a lanzar
+  # El script de bootstrap se descarga desde S3 y se ejecuta al iniciar la instancia
+  WebLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: web-lt-test
+      LaunchTemplateData:
+        IamInstanceProfile:
+          Name: EMR_EC2_DefaultRole
+        ImageId: !Ref AMIId
+        # KeyName: vockey # Remover este comentario si se quiere usar una clave SSH para acceder a las instancias 
+        InstanceType: t2.micro
+        SecurityGroupIds:
+          - !Ref WebSecurityGroup
+        UserData:
+          # El script de bootstrap se descarga desde S3 y se ejecuta al iniciar la instancia
+          # Asegurarse de que el bucket y la clave del script sean correctos
+          Fn::Base64: !Sub |
+            #!/bin/bash
+            aws s3 cp s3://${BootstrapScriptBucket}//bootstrap.sh /tmp/bootstrap.sh
+            chmod +x /tmp/bootstrap.sh
+            /tmp/bootstrap.sh
+            
+  # Auto Scaling Group
+  # El Auto Scaling Group se configura para manejar la escalabilidad de la aplicación
+  # Se lanza usando el Launch Template y se asocia con el Target Group
+  WebAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AutoScalingGroupName: web-asg
+      VPCZoneIdentifier:
+        - !Ref Subnet1
+        - !Ref Subnet2
+      LaunchTemplate:
+        LaunchTemplateName: time-app-launch-template
+        Version: '1' # Si se cambia el Launch Template, actualizar la versión aquí
+      MinSize: '2'
+      MaxSize: '4'
+      DesiredCapacity: '2'
+      TargetGroupARNs:
+        - !Ref WebTargetGroup
+      HealthCheckType: EC2
+      HealthCheckGracePeriod: 300
+
+Outputs:
+  SecurityGroupId:
+    Value: !Ref WebSecurityGroup
+  TargetGroupArn:
+    Value: !Ref WebTargetGroup
+  LoadBalancerDNSName:
+    Value: !GetAtt WebLoadBalancer.DNSName
+  LaunchTemplateId:
+    Value: !Ref WebLaunchTemplate
+  AutoScalingGroupName:
+    Value: !Ref WebAutoScalingGroup

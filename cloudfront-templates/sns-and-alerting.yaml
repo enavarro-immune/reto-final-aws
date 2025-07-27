@@ -1,0 +1,111 @@
+# Este archivo contiene la configuración de alerta y notificación para la infraestructura web.
+# Incluye la creación de un Topic de SNS, suscripciones y alarmas de CloudWatch
+# Las alarmas están configuradas para monitorear errores del ALB, conteo de hosts no saludables 
+#en el Target Group y capacidad del Auto Scaling Group.
+# Los recursos se crean en el contexto de la infraestructura web definida en core-infra.yaml.
+AWSTemplateFormatVersion: '2010-09-09'
+Description: SNS and Alerting for Web Infrastructure
+
+Parameters:
+  AlertEmail:
+    Type: String
+    Description: Email address to receive CloudWatch alarm notifications
+    # Debe ser un valor de correo electrónico válido para recibir notificaciones de alarmas
+
+Resources:
+  # SNS Topic for alerts
+  # Este Topic se utiliza para enviar notificaciones de alarmas a través de SNS
+  WebAlertsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: Time-App-Alerts-Topic
+
+  # SNS Email Subscription
+  # Se crea una suscripción al Topic de SNS para enviar notificaciones por correo electrónico
+  WebAlertsSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref WebAlertsTopic
+      Protocol: email
+      Endpoint: !Ref AlertEmail
+
+  # ALB 5XX Errors Alarm
+  # Esta alarma se activa cuando hay errores 5XX en el ALB
+  # Se configura para enviar notificaciones al Topic de SNS cuando se detectan errores
+  ALB5XXErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: Web-ALB-5XX-Errors
+      MetricName: HTTPCode_ELB_5XX_Count
+      Namespace: AWS/ApplicationELB
+      Dimensions:
+        - Name: LoadBalancer
+          Value: !Select 
+            - 1
+            - !Split 
+              - "/"
+              - !GetAtt WebLoadBalancer.LoadBalancerFullName
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      AlarmActions:
+        - !Ref WebAlertsTopic
+      OKActions:
+        - !Ref WebAlertsTopic
+      TreatMissingData: notBreaching
+
+  # Target Group Unhealthy Host Count Alarm
+  # Esta alarma se activa cuando el conteo de hosts no saludables en el Target Group es mayor que 0
+  TargetGroupUnhealthyHostCountAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: Web-TG-Unhealthy-Host-Count
+      MetricName: UnHealthyHostCount
+      Namespace: AWS/ApplicationELB
+      Dimensions:
+        - Name: TargetGroup
+          Value: !Select 
+            - 1
+            - !Split 
+              - "/"
+              - !GetAtt WebTargetGroup.TargetGroupFullName
+        - Name: LoadBalancer
+          Value: !Select 
+            - 1
+            - !Split 
+              - "/"
+              - !GetAtt WebLoadBalancer.LoadBalancerFullName
+      Statistic: Average
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      AlarmActions:
+        - !Ref WebAlertsTopic
+      OKActions:
+        - !Ref WebAlertsTopic
+      TreatMissingData: notBreaching
+
+  # ASG High Capacity Alarm
+  # Esta alarma se activa cuando el Auto Scaling Group tiene más de 4 instancias en servicio
+  ASGHighCapacityAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: Web-ASG-High-Capacity
+      MetricName: GroupInServiceInstances
+      Namespace: AWS/AutoScaling
+      Dimensions:
+        - Name: AutoScalingGroupName
+          Value: !Ref WebAutoScalingGroup
+      Statistic: Average
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 4
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      AlarmActions:
+        - !Ref WebAlertsTopic
+      OKActions:
+        - !Ref WebAlertsTopic
+      TreatMissingData: notBreaching
