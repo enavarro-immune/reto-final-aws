@@ -1,13 +1,18 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: S3 Bucket with policy allowing EC2 role read access
-# Vamos a desplegar un bucket s3 para subir todos los archivos necesarios para la aplicacion y vamos a asignarle una politica de 
-# acceso a los EC2 generados por el template de core-infra
+
+Parameters:
+  IAMRoleARN:
+    Type: String
+    Description: IAM Role that gives access to the ec2 instance to s3 buckets 
+    # tiene que ser un valor con la forma arn:aws:iam::account-id:role/role-name
+
 Resources:
   BackendS3Bucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: time-app-backend-bucket # Si se cambia el nombre del bucket tambien se debe cambiar en el archivo boostrap.sh
-      PublicAccessBlockConfiguration: # Se bloquea todo el acceso publico al contenido del bucket
+      BucketName: time-app-backend-bucket
+      PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
         IgnorePublicAcls: true
@@ -21,8 +26,8 @@ Resources:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
-  # En este caso necesitamos definir un Bucket Policy que nos permita darle acceso 
-  # a las instancias EC2 con el role EMR_EC2_DefaultRole a los documentos dentro del bucket
+              
+  # S3 Bucket Policy to allow EC2 role read access
   BucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
@@ -33,10 +38,10 @@ Resources:
           - Sid: AllowEC2RoleReadAccess
             Effect: Allow
             Principal:
-              AWS: arn:aws:iam::984332661247:role/EMR_EC2_DefaultRole
+              AWS: !Ref IAMRoleARN
             Action:
               - s3:GetObject
               - s3:ListBucket
-            Resource: #damos acceso al bucket y a todo el contenido en su interior
+            Resource:
               - !Sub arn:aws:s3:::${BucketName}
               - !Sub arn:aws:s3:::${BucketName}/*

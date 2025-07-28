@@ -127,7 +127,7 @@ Resources:
   WebLaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
     Properties:
-      LaunchTemplateName: web-lt-test
+      LaunchTemplateName: time-app-launch-template
       LaunchTemplateData:
         IamInstanceProfile:
           Name: EMR_EC2_DefaultRole
@@ -151,7 +151,7 @@ Resources:
   WebAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
-      AutoScalingGroupName: web-asg
+      AutoScalingGroupName: time-app-auto-scaling-group
       VPCZoneIdentifier:
         - !Ref Subnet1
         - !Ref Subnet2
