@@ -4,6 +4,8 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: Custom VPC with 2 public subnets, 2 private subnets, IGW and NAT Gateway
 
+# Parameters
+# Los parámetros permiten personalizar la CIDR block de la VPC y las subredes
 Parameters:
   VpcCIDR:
     Type: String
@@ -24,6 +26,7 @@ Parameters:
 Resources:
 
   # VPC
+  # Se crea una VPC personalizada con soporte para DNS y nombres de host
   CustomVPC:
     Type: AWS::EC2::VPC
     Properties:
@@ -35,6 +38,7 @@ Resources:
           Value: TimeAppVPC
 
   # Internet Gateway
+  # Se crea una puerta de enlace de Internet para permitir el acceso a Internet desde las subredes públicas
   InternetGateway:
     Type: AWS::EC2::InternetGateway
     Properties:
@@ -49,6 +53,8 @@ Resources:
       InternetGatewayId: !Ref InternetGateway
 
   # Public Subnets
+  # Se crean dos subredes públicas en diferentes zonas de disponibilidad
+  # para alta disponibilidad y balanceo de carga
   PublicSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
@@ -72,6 +78,8 @@ Resources:
           Value: PublicSubnet2
 
   # Private Subnets
+  # Se crean dos subredes privadas en diferentes zonas de disponibilidad
+  # para alta disponibilidad y seguridad
   PrivateSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
@@ -93,6 +101,9 @@ Resources:
           Value: PrivateSubnet2
 
   # NAT Gateway
+  # Se crea un NAT Gateway para permitir que las instancias en subredes privadas
+  # accedan a Internet para actualizaciones y descargas, sin exponerlas directamente a Internet
+  # Se asigna una dirección IP elástica al NAT Gateway para que tenga una IP fija
   EIPNat:
     Type: AWS::EC2::EIP
     Properties:
@@ -108,6 +119,8 @@ Resources:
           Value: TimeAPPNATGateway
 
   # Route Tables
+  # Se crean tablas de rutas para las subredes públicas y privadas
+  # Las subredes públicas tienen una ruta a la puerta de enlace de Internet
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
@@ -125,6 +138,7 @@ Resources:
           Value: PrivateRouteTable
 
   # Routes
+  # Se definen las rutas para las tablas de rutas
   PublicRoute:
     Type: AWS::EC2::Route
     DependsOn: AttachGateway
@@ -141,6 +155,8 @@ Resources:
       NatGatewayId: !Ref NatGateway
 
   # Subnet associations
+  # Se asocian las subredes con sus respectivas tablas de rutas
+  # Las subredes públicas usan la tabla de rutas pública y las privadas la tabla de rutas privada
   PublicSubnet1RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:

@@ -135,7 +135,7 @@ Resources:
         IamInstanceProfile:
           Name: EMR_EC2_DefaultRole
         ImageId: !Ref AMIId
-        KeyName: testlk # Remover este comentario si se quiere usar una clave SSH para acceder a las instancias 
+        # KeyName: vockey # Remover este comentario si se quiere usar una clave SSH para acceder a las instancias 
         InstanceType: t2.micro
         SecurityGroupIds:
           - !Ref WebSecurityGroup
