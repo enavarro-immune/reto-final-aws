@@ -121,9 +121,11 @@ BootstrapScriptBucket: Tiene que ser un valor con el nombre del bucket S3 donde 
 El motivo de porque no se incluyen las etiquetas en los templates es que debido a que se propone una etiqueta con fecha es más sencillo agregarlas con la creación del stack a tener que modificar un archivo yaml. Si todo se realizó de manera correcta el usuario debería ser capaz de acceder al DNS name del Load Balancer y acceder desde ahí a la aplicació
 
 ## Seguridad
-El bucket S3 bloquea el acceso público. Se usa cifrado SSE-S3.
-Las instancias EC2 acceden al bucket usando IAM Role con permisos mínimos.
-Opcionalmente se puede aplicar un AWS WAF con reglas de bloqueo automáticas. Al momento de creación del proyecto en Julio 2025, AWS creó una manera sencilla de agregar un WAF al Load Balancer sin embargo aún no se adaptan los templates de Cloudformation para esto, por lo tanto se recomienda agregar el WAF al Load Balancer directamente desde el portal.
+1. El bucket S3 bloquea el acceso público. Se usa cifrado SSE-S3.
+
+2. Las instancias EC2 acceden al bucket usando IAM Role con permisos mínimos.
+
+3. Opcionalmente se puede aplicar un AWS WAF con reglas de bloqueo automáticas. Al momento de creación del proyecto en Julio 2025, AWS creó una manera sencilla de agregar un WAF al Load Balancer sin embargo aún no se adaptan los templates de Cloudformation para esto, por lo tanto se recomienda agregar el WAF al Load Balancer directamente desde el portal.
 
 ## Evaluación de Costos Estimada (Mensual)
 
