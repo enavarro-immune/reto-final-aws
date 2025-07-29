@@ -17,10 +17,10 @@ mkdir -p $LOCAL_DIR
 cd $LOCAL_DIR
 
 # Descarga los archivos necesarios para la aplicación desde un bucket de S3
-aws s3 cp s3://casf47/Dockerfile ./Dockerfile
-aws s3 cp s3://casf47/app.py ./app.py
-aws s3 cp s3://casf47/requirements.txt ./requirements.txt
-aws s3 cp s3://casf47/templates/ ./templates/ --recursive # Descarga recursiva de la carpeta templates
+aws s3 cp s3://time-app-backend-bucket/Dockerfile ./Dockerfile
+aws s3 cp s3://time-app-backend-bucket/app.py ./app.py
+aws s3 cp s3://time-app-backend-bucket/requirements.txt ./requirements.txt
+aws s3 cp s3://time-app-backend-bucket/templates/ ./templates/ --recursive # Descarga recursiva de la carpeta templates
 
 # Construye la imagen Docker de la aplicación
 sudo docker build -t time-app-image .
