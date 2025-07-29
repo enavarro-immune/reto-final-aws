@@ -28,14 +28,9 @@ Docker permite empaquetar la aplicación y sus dependencias en una única imagen
 
 Actúa como un repositorio central y duradero para el código fuente y archivos de despliegue. Tambien nos ayuda a cumplir los requisitos de alta disponibilidad a un bajo costo y es ideal para integrarse en procesos de bootstrapping.
 
-*Launch Template + Auto Scaling Group (ASG)*
+Auto Scaling Group (ASG)*
 
 En combinación son uno de los estándares básicos de automatización y garantía de alta disponibilidad en el sistema garantizado que las instancias desplegadas sean constantes lo que a su vez nos permite predecir el comportamiento de la aplicación, tener mejor control de gastos, seguridad entre otros, además de reducir impactos por errores humanos en el despliegue de la infraestructura.
-
-*Launch Template* 
-
-Define cómo se lanzan las instancias EC2 (AMI, bootstrap script, key pair, etc.).
-Auto Scaling Group: Proporciona escalado automático y reemplazo de instancias en caso de fallo.
 
 *Application Load Balancer (ALB)*
 
