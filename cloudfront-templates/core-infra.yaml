@@ -32,12 +32,14 @@ Parameters:
   AMIId:
     Type: String
     Description: Amazon Linux AMI ID
+    Default: ami-0cbbe2c6a1bb2ad63
     # tiene que ser un valor con la forma ami-xxxxxxxxxxxxxxxxx que
     # corresponda a una AMI válida
 
   BootstrapScriptBucket:
     Type: String
     Description: S3 Bucket name where the bootstrap script is stored
+    Default: time-app-backend-bucket
     # tiene que ser un valor con el nombre del bucket S3 donde se encuentra el script de bootstrap
 
 # Los recursos se van a crear en orden de dependencia.
@@ -47,6 +49,7 @@ Resources:
   # Es muy importante que el SG permita el trafico a travez del puerto 80 ya que la aplicacion corre en ese puerto
   # y el HTTP Listener escucha en ese puerto. Si se cambia el puerto, hay que actualizarlo en la app y en el HTTP Listener.
   WebSecurityGroup: 
+    Type: AWS::EC2::SecurityGroup
     Properties:
       GroupName: time-app-security-group
       GroupDescription: SG for web servers
@@ -132,7 +135,7 @@ Resources:
         IamInstanceProfile:
           Name: EMR_EC2_DefaultRole
         ImageId: !Ref AMIId
-        # KeyName: vockey # Remover este comentario si se quiere usar una clave SSH para acceder a las instancias 
+        KeyName: testlk # Remover este comentario si se quiere usar una clave SSH para acceder a las instancias 
         InstanceType: t2.micro
         SecurityGroupIds:
           - !Ref WebSecurityGroup
@@ -141,7 +144,7 @@ Resources:
           # Asegurarse de que el bucket y la clave del script sean correctos
           Fn::Base64: !Sub |
             #!/bin/bash
-            aws s3 cp s3://${BootstrapScriptBucket}//bootstrap.sh /tmp/bootstrap.sh
+            aws s3 cp s3://${BootstrapScriptBucket}/bootstrap.sh /tmp/bootstrap.sh
             chmod +x /tmp/bootstrap.sh
             /tmp/bootstrap.sh
             

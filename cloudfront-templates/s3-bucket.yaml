@@ -6,12 +6,16 @@ Parameters:
     Type: String
     Description: IAM Role that gives access to the ec2 instance to s3 buckets 
     # tiene que ser un valor con la forma arn:aws:iam::account-id:role/role-name
+  BucketName:
+    Type: String
+    Description: Name of the S3 bucket to create
+    Default: time-app-backend-bucket
 
 Resources:
   BackendS3Bucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: time-app-backend-bucket
+      BucketName: !Ref BucketName
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
