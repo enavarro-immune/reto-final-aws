@@ -135,7 +135,7 @@ Resources:
         IamInstanceProfile:
           Name: EMR_EC2_DefaultRole
         ImageId: !Ref AMIId
-        # KeyName: vockey # Remover este comentario si se quiere usar una clave SSH para acceder a las instancias 
+        #KeyName: vockey # Remover este comentario si se quiere usar una clave SSH para acceder a las instancias 
         InstanceType: t2.micro
         SecurityGroupIds:
           - !Ref WebSecurityGroup
@@ -144,9 +144,12 @@ Resources:
           # Asegurarse de que el bucket y la clave del script sean correctos
           Fn::Base64: !Sub |
             #!/bin/bash
-            aws s3 cp s3://${BootstrapScriptBucket}/bootstrap.sh /tmp/bootstrap.sh
-            chmod +x /tmp/bootstrap.sh
-            /tmp/bootstrap.sh
+            sudo yum update -y
+            sudo yum install -y dos2unix
+            sudo aws s3 cp s3://${BootstrapScriptBucket}/bootstrap.sh ./bootstrap.sh
+            sudo chmod +x bootstrap.sh
+            sudo dos2unix bootstrap.sh
+            sudo ./bootstrap.sh
             
   # Auto Scaling Group
   # El Auto Scaling Group se configura para manejar la escalabilidad de la aplicación
