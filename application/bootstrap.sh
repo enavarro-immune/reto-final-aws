@@ -2,7 +2,6 @@
 # Este script se utiliza para configurar el entorno de la aplicación Time-App en una instancia EC2
 # Incluye la instalación de Docker, AWS CLI, descarga de archivos de la aplicación desde S3,
 # y la construcción y ejecución de un contenedor Docker para la aplicación.
-sudo yum update -y
 sudo yum install -y docker # Instala Docker en la instancia
 sudo systemctl start docker # Inicia el servicio Docker
 sudo systemctl enable docker # Habilita Docker para que se inicie al arrancar la instancia
@@ -17,10 +16,10 @@ mkdir -p $LOCAL_DIR
 cd $LOCAL_DIR
 
 # Descarga los archivos necesarios para la aplicación desde un bucket de S3
-aws s3 cp s3://time-app-backend-bucket/Dockerfile ./Dockerfile
-aws s3 cp s3://time-app-backend-bucket/app.py ./app.py
-aws s3 cp s3://time-app-backend-bucket/requirements.txt ./requirements.txt
-aws s3 cp s3://time-app-backend-bucket/templates/ ./templates/ --recursive # Descarga recursiva de la carpeta templates
+sudo aws s3 cp s3://time-app-backend-bucket/Dockerfile ./Dockerfile
+sudo aws s3 cp s3://time-app-backend-bucket/app.py ./app.py
+sudo aws s3 cp s3://time-app-backend-bucket/requirements.txt ./requirements.txt
+sudo aws s3 cp s3://time-app-backend-bucket/templates/ ./templates/ --recursive # Descarga recursiva de la carpeta templates
 
 # Construye la imagen Docker de la aplicación
 sudo docker build -t time-app-image .
