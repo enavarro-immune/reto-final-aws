@@ -1,9 +1,8 @@
-# Reto final módulo: Aplicación con contenerización en Docker e
-infraestructura de alta disponibilidad con CloudFormation
+# Reto final módulo: Despliegue de una aplicación con contenerización en Docker e infraestructura de alta disponibilidad con CloudFormation
 Emmanuel Navarro
 
 ## Objetivos
-Crear una aplicación sencilla en Flask que permita abordar los principios de desarrollo de una aplicación con contenerización en Docker así como diseñar, desplegar y documentar una arquitectura de alta disponibilidad con CloudFormation para dicha aplicación.
+Crear una aplicación sencilla en Flask que permita abordar los principios de contenerización en Docker así como diseñar, desplegar y documentar una arquitectura de alta disponibilidad con CloudFormation para dicha aplicación.
 
 ## Diagrama de arquitectura
 <img width="500" height="500" alt="retofinalmoduloaws drawio (1)" src="https://github.com/user-attachments/assets/08b0745a-cfe1-4242-8700-b498eeae0709" />
