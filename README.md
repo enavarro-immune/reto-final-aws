@@ -1,8 +1,8 @@
-# Reto final módulo: Aplicación con contenerización en Docker e infraestructura de alta disponibilidad con CloudFormation
+# Reto final módulo: Despliegue de una aplicación con contenerización en Docker en una infraestructura de alta disponibilidad creada con CloudFormation
 Emmanuel Navarro Mora
 
 ## Objetivos
-Crear una aplicación sencilla en Flask que permita abordar los principios de desarrollo de una aplicación con contenerización en Docker así como diseñar, desplegar y documentar una arquitectura de alta disponibilidad con CloudFormation para dicha aplicación.
+Crear una aplicación sencilla en Flask que permita abordar los principios de contenerización en Docker así como diseñar, desplegar y documentar una arquitectura de alta disponibilidad con CloudFormation para dicha aplicación.
 
 ## Diagrama de arquitectura
 <img width="3236" height="2420" alt="image" src="https://github.com/user-attachments/assets/ec42eea1-0a34-4872-83fa-8de366bc121e" />
@@ -28,7 +28,7 @@ Docker permite empaquetar la aplicación y sus dependencias en una única imagen
 
 Actúa como un repositorio central y duradero para el código fuente y archivos de despliegue. Tambien nos ayuda a cumplir los requisitos de alta disponibilidad a un bajo costo y es ideal para integrarse en procesos de bootstrapping.
 
-Auto Scaling Group (ASG)*
+*Auto Scaling Group (ASG) y Launch Template*
 
 En combinación son uno de los estándares básicos de automatización y garantía de alta disponibilidad en el sistema garantizado que las instancias desplegadas sean constantes lo que a su vez nos permite predecir el comportamiento de la aplicación, tener mejor control de gastos, seguridad entre otros, además de reducir impactos por errores humanos en el despliegue de la infraestructura.
 
@@ -53,19 +53,6 @@ Esta aplicación web construida con Flask muestra la fecha y hora actual en Cost
 
 1. Docker 
 2. Python 3.11 (para correr la app sin Docker)
-   
-### Infraestructura (AWS)
-Componentes principales:
-
-*VPC:* Con sus respectivas subredes y tablas de enrutamiento así como un NAT Gateway y un Internet Gateway para conexión a internet.
-
-*S3 Bucket:* Contiene app.py, Dockerfile, requirements.txt  y archivos HTML para el funcionamiento de la app.
-
-*Launch Template:* Proporciona la configuración de las instancias EC2, tambien les indica que deben descargar y ejecutar un script de arranque (`bootstrap.sh`) que instala Docker y ejecuta la app.
-
-*Auto Scaling Group:* Escala las instancias EC2 según demanda.
-
-*Application Load Balancer:* Balancea tráfico entre instancias y realiza chequeos de salud.
 
 ## Templates
 Todos los templates se pueden encontrar bajo la carpeta *cloudfront-templates*. Para la correcta creación del proyecto se deben generar los stacks usando un orden específico debido a que ciertos recursos son dependientes de la creación previa de otro y por estándares de mejores prácticas no es recomendable tener todos los recursos configurados en un solo archivo. El proyecto está compuesto de tres templates:
