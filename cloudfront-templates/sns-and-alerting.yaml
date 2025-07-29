@@ -11,7 +11,18 @@ Parameters:
     Type: String
     Description: Email address to receive CloudWatch alarm notifications
     # Debe ser un valor de correo electrónico válido para recibir notificaciones de alarmas
-
+  
+  AutoScalingGroupFullName:
+    Type: String
+    Description: Name of the Auto Scaling Group for the web application
+  TargetGroupFullName:
+    Type: String
+    Description: Name of the Target Group for the web application
+  LoadBalancerFullName:
+    Type: String
+    Description: Name of the Load Balancer for the web application
+    # Estos parámetros deben coincidir con los nombres de los recursos creados en core-infra.yaml
+ 
 Resources:
   # SNS Topic for alerts
   # Este Topic se utiliza para enviar notificaciones de alarmas a través de SNS
@@ -40,11 +51,7 @@ Resources:
       Namespace: AWS/ApplicationELB
       Dimensions:
         - Name: LoadBalancer
-          Value: !Select 
-            - 1
-            - !Split 
-              - "/"
-              - !GetAtt WebLoadBalancer.LoadBalancerFullName
+          Value: !Ref LoadBalancerFullName
       Statistic: Sum
       Period: 60
       EvaluationPeriods: 1
@@ -66,17 +73,9 @@ Resources:
       Namespace: AWS/ApplicationELB
       Dimensions:
         - Name: TargetGroup
-          Value: !Select 
-            - 1
-            - !Split 
-              - "/"
-              - !GetAtt WebTargetGroup.TargetGroupFullName
+          Value: !Ref TargetGroupFullName
         - Name: LoadBalancer
-          Value: !Select 
-            - 1
-            - !Split 
-              - "/"
-              - !GetAtt WebLoadBalancer.LoadBalancerFullName
+          Value: !Ref LoadBalancerFullName
       Statistic: Average
       Period: 60
       EvaluationPeriods: 1
@@ -98,7 +97,7 @@ Resources:
       Namespace: AWS/AutoScaling
       Dimensions:
         - Name: AutoScalingGroupName
-          Value: !Ref WebAutoScalingGroup
+          Value: !Ref AutoScalingGroupFullName
       Statistic: Average
       Period: 60
       EvaluationPeriods: 1
