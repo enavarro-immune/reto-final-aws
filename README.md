@@ -7,6 +7,30 @@ Crear una aplicación sencilla en Flask que permita abordar los principios de co
 ## Diagrama de arquitectura
 <img width="500" height="500" alt="retofinalmoduloaws drawio (1)" src="https://github.com/user-attachments/assets/08b0745a-cfe1-4242-8700-b498eeae0709" />
 
+La infraestructura va a ser desplegada en la nube de AWS, en la región us-east que es la más cercana al
+creador del proyecto. Todos los recursos van a ser creados con Cloudformation.
+
+1. La infraestructura comienza con un VPC personalizado creado con dos subredes públicas y dos
+privadas, ubicadas en dos zonas distintas para garantizar alta disponibilidad, así como las tablas de
+rutas, un NAT Gateway y un Internet Gateway para el acceso a la aplicación desde internet.
+
+2. Un Autoscale Group se va a encargar de lanzar instancias de EC2 asociadas a las distintas subredes
+públicas creadas previamente usando un Launch Template que nos va a indicar la configuración de las
+instancias.
+
+3. Un security group se va a encargar de permitir el tráfico necesario solamente al Load Balancer
+exponiendo solo una IP al internet y aumentando la seguridad del sistema.
+
+4. Se va a crear un S3 con un bucket policy que permita a las EC2 acceder a los archivos dentro del
+bucket que son todos los necesarios para el funcionamiento de la aplicación.
+
+5. Un Load Balancer se va a encargar de administrar el tráfico a las distintas instancias así como
+monitorear el estado de salud de estas mediante un Target Group.
+
+6. Finalmente un sistema de alertas de Cloudwatch se va a encargar de monitorear eventos en el
+Autoscale Group y usando una suscripción de SNS envía un correo al usuario en caso de algún
+incidente.
+
 ## Justificación de diseño
 El proyecto está enfocado en demostrar aprendizaje práctico sobre infraestructura y servicios de AWS. Si bien se es consciente de que existen maneras más sencillas y eficientes el resolver el sistema planteado, con uno o dos recursos no se cumplirira con los objetivos didacticos por lo que se escoge la opción que nos permita no sólo desplegar una buena cantidad de los recursos vistos a lo largo del módulo sino también comprender los principios de despliegue de infraestructura con Cloudformation. Los recursos utilizados fueron los siguientes:
 
@@ -44,6 +68,23 @@ Permite definir toda la infraestructura como código (IaC), facilitando el versi
 ### Aplicación Flask
 
 Esta aplicación web construida con Flask muestra la fecha y hora actual en Costa Rica y España. También permite al usuario ingresar una fecha futura para calcular cuántos días faltan desde hoy hasta esa fecha.
+
+La aplicación funciona mediante un script app.py que cuenta con la aplicación de Flask asi como las distintas
+rutas para funcionamiento y revisiones de salud. Junto a esto se provee un Dockerfile con todos los
+comandos necesarios para la creación de la imagen de la aplicación y poder correrla de forma contenerizada
+en las instancias EC2. Juntos a estos archivos se incluye un archivo de requirements.txt con las
+dependencias del programa que se instalan cuando se crea la imagen y finalmente se incluye un folder de
+templates con el archivo html que funciona de frontend.
+
+Aparte de la aplicación se provee al usuario con un script llamado bootstrap.sh, el cual configura una instancia
+EC2 para ejecutar una aplicación web dentro de un contenedor Docker. Primero instala Docker, inicia su
+servicio y configura al usuario ec2-user para que pueda usar Docker sin privilegios elevados. Luego instala la
+AWS CLI, que se usa para descargar archivos desde un bucket S3. El script crea un directorio local para la
+aplicación, se mueve a él y descarga desde S3 el Dockerfile, el archivo principal de la app (app.py), las
+dependencias (requirements.txt) y la carpeta de plantillas (templates/). Finalmente, construye una imagen
+Docker llamada time-app-image usando esos archivos, y lanza un contenedor en segundo plano en el puerto
+80, haciendo que la aplicación esté disponible para recibir tráfico HTTP. Esta configuración facilita despliegues
+consistentes y portables, aislando la aplicación dentro del contenedor.
 
 ## Requisitos para despliegue en AWS:
 
